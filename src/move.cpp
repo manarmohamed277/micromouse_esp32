@@ -7,6 +7,9 @@
 #define MOTOR_LEFT_FWD   27
 #define MOTOR_LEFT_BWD   14
 
+
+// خلي بالك انك هتستخدمي الانتربت
+
 void moveForward() {
   digitalWrite(MOTOR_RIGHT_FWD, HIGH);
   digitalWrite(MOTOR_RIGHT_BWD, LOW);
