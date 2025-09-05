@@ -15,11 +15,11 @@ int dy[4] = {1,0,-1,0};
 int curr_x = 0, curr_y = 0;
 int Direction = 0;
 
-int visited[N][N] = {0};
-int walls[N][N] = {0};
+byte visited[N][N] = {0};
+byte walls[N][N] = {0};
 int bestDir;
 
-int flood[N][N] =
+byte flood[N][N] =
         {
                 {14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14},
                 {13, 12, 11, 10, 9, 8, 7, 6, 6, 7, 8, 9, 10, 11, 12, 13},
@@ -144,7 +144,7 @@ int hasWall(int x, int y, int dir) {
 
           /*******************************take an action*********************************/
 
-          void stepToLowestNeighbor() {
+          void stepToLowestNeighbor_old() {
                bestDir=-1; int bestVal=999;
 
               for (int d=0; d<4; d++) {
@@ -206,9 +206,380 @@ int hasWall(int x, int y, int dir) {
             ////////////////////////////////////////////////
             moveForward();
           }
+          //////////////////////////////////////////////////////////////
+           void exploreMaze() {
+              int total = N * N;
+              int visited_count = 0;
+
+              // reset visited
+              for (int i=0;i<N;i++)
+                  for (int j=0;j<N;j++)
+                      visited[i][j]=0;
+
+              // أول خلية
+              senseWalls();
+              visited[curr_x][curr_y] = 1;
+              visited_count++;
+
+              while (visited_count < total) {
+                  // دور على جار جديد
+                  int found = 0;
+                  for (int d=0; d<4; d++) {
+                      int nx = curr_x + dx[d];
+                      int ny = curr_y + dy[d];
+                      if (nx<0 || ny<0 || nx>=N || ny>=N) continue;
+
+
+                      if (!hasWall(curr_x,curr_y,d) && !visited[nx][ny]) {
+                          
+                          // لف بالـ ifs
+                          if(Direction==0&&d==1) turnRight();
+                          else if(Direction==0&&d==3) turnLeft();
+                          else if(Direction==0&&d==2){ turnLeft(); turnLeft(); }
+
+                          else if(Direction==1&&d==0) turnLeft();
+                          else if(Direction==1&&d==3){ turnLeft(); turnLeft(); }
+                          else if(Direction==1&&d==2) turnRight();
+
+                          else if(Direction==2&&d==0){ turnLeft(); turnLeft(); }
+                          else if(Direction==2&&d==1) turnLeft();
+                          else if(Direction==2&&d==3) turnRight();
+
+                          else if(Direction==3&&d==0) turnRight();
+                          else if(Direction==3&&d==1){ turnRight(); turnRight(); }
+                          else if(Direction==3&&d==2) turnLeft();
+
+                          Direction = d;
+
+                          moveForward();
+                          curr_x = nx; curr_y = ny;
+
+                          senseWalls(); // مهم جداً: أول ما أوصل لخلية أسجل الحيطان
+                          visited[curr_x][curr_y] ++;
+                          visited_count++;
+                         
+                          found = 1;
+                          break;
+                      }
+                  }
+
+                  if (!found) {
+                      
+
+                      bestDir=-1; int bestVal=999;
+
+                      for (int d=0; d<4; d++) {
+                          int nx=curr_x+dx[d], ny=curr_y+dy[d];
+                          if (nx>=0 && ny>=0 && nx<N && ny<N) {
+                              if (!hasWall(curr_x,curr_y,d)) {
+                                  if (visited[nx][ny] < bestVal) {
+                                      bestVal=visited[nx][ny];
+                                      bestDir=d;
+                                      //
+                                      // printf("best direction %d",d);
+                                  }
+                              }
+                          }
+                      }
+                      
+
+                      // directions: 0=N, 1=E, 2=S, 3=W
+                      if((Direction==0)&&(bestDir==1))
+                          turnRight();
+                      else if(Direction==0&&bestDir==3)
+                          turnLeft();
+
+                      else if(Direction==0&&bestDir==2)
+                      {
+                          turnLeft();
+                          turnLeft();
+                      }
+
+                          //////////////////////////////////////////////
+                      else if(Direction==1&&bestDir==0)
+                          turnLeft();
+
+                      else if(Direction==1&&bestDir==3) {
+                          turnLeft();
+                          turnLeft();
+                      }
+                      else if(Direction==1&&bestDir==2)
+                          turnRight();
+                          //////////////////////////////////////////////
+                      else if(Direction==3&&bestDir==0)
+                          turnRight();
+                      else if(Direction==3&&bestDir==1){
+                          turnRight();
+                          turnRight();}
+                      else if(Direction==3&&bestDir==2)
+                          turnLeft();
+
+                          /////////////////////////////////////////////
+                      else if(Direction==2&&bestDir==0){
+                          turnLeft();
+                          turnLeft();}
+                      else if(Direction==2&&bestDir==1)
+                          turnLeft();
+                      else if(Direction==2&&bestDir==3)
+                          turnRight();
+                      else if (bestDir == -1) {
+                          
+                          return;
+                      }
+
+                      ////////////////////////////////////////////////
+                      moveForward();
+                      visited[curr_x][curr_y]++;
+                      // مفيش جار جديد: ارجع لورا
+                   /*   if(Direction==0){ turnLeft(); turnLeft(); Direction=2; }
+                      else if(Direction==1){ turnLeft(); turnLeft(); Direction=3; }
+                      else if(Direction==2){ turnLeft(); turnLeft(); Direction=0; }
+                      else if(Direction==3){ turnLeft(); turnLeft(); Direction=1; }
+
+                      if (!hasWall(curr_x,curr_y,Direction)) {
+                          moveForward();
+
+                         // curr_x += dx[Direction];
+                          //curr_y += dy[Direction];
+                      }*/} /*else {
+                          log("Maze fully explored or stuck!");
+                          break;
+                      }*/
+                  }
+
+
+
+
+             
+          }
 
 /*********************less turns more distans*****************************/
-         /* void stepToLowestNeighbor() {
+        void stepToLowestNeighbor() {
+
+
+
+               bestDir=-1; int bestVal=999;
+              int found = 0;
+              for (int d=0; d<4; d++) {
+                  int nx=curr_x+dx[d], ny=curr_y+dy[d];
+                  if (nx>=0 && ny>=0 && nx<N && ny<N) {
+                     if ((!hasWall(curr_x,curr_y,d))&&(!visited[nx][ny])) {
+                         found=1;
+                          if (flood[nx][ny] < bestVal) {
+                              bestVal=flood[nx][ny];
+                              bestDir=d;
+                             //
+                             // printf("best direction %d",d);
+                          }
+                      }
+                  }
+              }
+             
+
+              // directions: 0=N, 1=E, 2=S, 3=W
+              if((Direction==0)&&(bestDir==1))
+                  turnRight();
+              else if(Direction==0&&bestDir==3)
+                  turnLeft();
+
+              else if(Direction==0&&bestDir==2)
+              {
+                  turnLeft();
+                  turnLeft();
+              }
+
+              //////////////////////////////////////////////
+              else if(Direction==1&&bestDir==0)
+                  turnLeft();
+
+              else if(Direction==1&&bestDir==3) {
+                  turnLeft();
+                  turnLeft();
+              }
+              else if(Direction==1&&bestDir==2)
+                  turnRight();
+              //////////////////////////////////////////////
+              else if(Direction==3&&bestDir==0)
+                  turnRight();
+              else if(Direction==3&&bestDir==1){
+                  turnRight();
+                  turnRight();}
+              else if(Direction==3&&bestDir==2)
+                  turnLeft();
+
+              /////////////////////////////////////////////
+              else if(Direction==2&&bestDir==0){
+                  turnLeft();
+                  turnLeft();}
+              else if(Direction==2&&bestDir==1)
+                  turnLeft();
+              else if(Direction==2&&bestDir==3)
+                  turnRight();
+              else if (bestDir == -1) {
+                 // log("No move possible!");
+                  bestDir=-1; int bestVal=999;
+
+                  for (int d=0; d<4; d++) {
+                      int nx=curr_x+dx[d], ny=curr_y+dy[d];
+                      if (nx>=0 && ny>=0 && nx<N && ny<N) {
+                          if (!hasWall(curr_x,curr_y,d)) {
+                              if (visited[nx][ny] < bestVal) {
+                                  bestVal=visited[nx][ny];
+                                  bestDir=d;
+                                  //
+                                  // printf("best direction %d",d);
+                              }
+                          }
+                      }
+                  }
+                 
+
+                  // directions: 0=N, 1=E, 2=S, 3=W
+                  if((Direction==0)&&(bestDir==1))
+                      turnRight();
+                  else if(Direction==0&&bestDir==3)
+                      turnLeft();
+
+                  else if(Direction==0&&bestDir==2)
+                  {
+                      turnLeft();
+                      turnLeft();
+                  }
+
+                      //////////////////////////////////////////////
+                  else if(Direction==1&&bestDir==0)
+                      turnLeft();
+
+                  else if(Direction==1&&bestDir==3) {
+                      turnLeft();
+                      turnLeft();
+                  }
+                  else if(Direction==1&&bestDir==2)
+                      turnRight();
+                      //////////////////////////////////////////////
+                  else if(Direction==3&&bestDir==0)
+                      turnRight();
+                  else if(Direction==3&&bestDir==1){
+                      turnRight();
+                      turnRight();}
+                  else if(Direction==3&&bestDir==2)
+                      turnLeft();
+
+                      /////////////////////////////////////////////
+                  else if(Direction==2&&bestDir==0){
+                      turnLeft();
+                      turnLeft();}
+                  else if(Direction==2&&bestDir==1)
+                      turnLeft();
+                  else if(Direction==2&&bestDir==3)
+                      turnRight();
+                  else if (bestDir == -1) {
+                     
+                      return;
+                  }
+
+                  ////////////////////////////////////////////////
+                  moveForward();
+                  visited[curr_x][curr_y]++;
+
+                  return;
+              }
+
+            ////////////////////////////////////////////////
+            moveForward();
+              visited[curr_x][curr_y]=1;
+
+          }
+
+void stepToLowestNeighborStatic() {
+
+        int bestDir = -1;
+        int bestVal = 999;
+
+        // الأول: دور على أقل قيمة
+        for (int d = 0; d < 4; d++) {
+            int nx = curr_x + dx[d], ny = curr_y + dy[d];
+            if (nx >= 0 && ny >= 0 && nx < N && ny < N) {
+                if (!hasWall(curr_x, curr_y, d)) {
+                    if (flood[nx][ny] < bestVal) {
+                        bestVal = flood[nx][ny];
+                        bestDir = d;
+                    }
+                }
+            }
+        }
+
+        // لو لقى أكتر من جار بنفس القيمة (tie-breaking)
+        if (bestDir != -1) {
+            for (int d = 0; d < 4; d++) {
+                int nx = curr_x + dx[d], ny = curr_y + dy[d];
+                if (nx >= 0 && ny >= 0 && nx < N && ny < N) {
+                    if (!hasWall(curr_x, curr_y, d)) {
+                        if (flood[nx][ny] == bestVal) {
+                            // الأولوية للاتجاه الحالي
+                            if (d == Direction) {
+                                bestDir = d;
+                                break;
+                            }
+                            // أولوية ثانوية: N=0, E=1, S=2, W=3
+                            if (bestDir != Direction && d < bestDir) {
+                                bestDir = d;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        
+
+        if (bestDir == -1) {
+           
+            return;
+        }
+
+        // نفس كود الدوران بتاعك بالظبط
+        if ((Direction == 0) && (bestDir == 1))
+            turnRight();
+        else if (Direction == 0 && bestDir == 3)
+            turnLeft();
+        else if (Direction == 0 && bestDir == 2) {
+            turnLeft();
+            turnLeft();
+        }
+        else if (Direction == 1 && bestDir == 0)
+            turnLeft();
+        else if (Direction == 1 && bestDir == 3) {
+            turnLeft();
+            turnLeft();
+        }
+        else if (Direction == 1 && bestDir == 2)
+            turnRight();
+        else if (Direction == 3 && bestDir == 0)
+            turnRight();
+        else if (Direction == 3 && bestDir == 1) {
+            turnRight();
+            turnRight();
+        }
+        else if (Direction == 3 && bestDir == 2)
+            turnLeft();
+        else if (Direction == 2 && bestDir == 0) {
+            turnLeft();
+            turnLeft();
+        }
+        else if (Direction == 2 && bestDir == 1)
+            turnLeft();
+        else if (Direction == 2 && bestDir == 3)
+            turnRight();
+
+        moveForward();
+    }
+
+
+
+
+/*********************less turns more distans*****************************/
+          void stepToLowestNeighbor_fewer_turns() {
               bestDir = -1;
               int bestVal = 999;
 
@@ -239,7 +610,7 @@ int hasWall(int x, int y, int dir) {
 
 
               if (bestDir == -1) {
-                  log("No valid neighbor found!");
+                  
                   return;
               }
 
@@ -262,7 +633,8 @@ int hasWall(int x, int y, int dir) {
 
 
               moveForward();
-          }*/
+          }
+          /*********************************************************************************/
           /*********************************************************************************/
 
 /////////////////////////////////////////////////////////////////////////

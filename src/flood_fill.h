@@ -11,6 +11,10 @@ void initWalls();
  void senseWalls();
  void floodFill();
  void stepToLowestNeighbor();
+ void stepToLowestNeighbor_old();
+ void exploreMaze() ;
+ void stepToLowestNeighborStatic();
+  void stepToLowestNeighbor_fewer_turns();
 
 #ifdef __cplusplus
 }
