@@ -4,14 +4,15 @@
 #include "sensor.h"
 #include "flood_fill.h"
 #include <EEPROM.h>
+#include <DFRobot_BMI160.h>
 
 //switch
-#define switch_pin 2
-#define switch_pin_go 3
+#define switch_pin 20
+#define switch_pin_go 19
 //////////////////////////
 #define EEPROM_SIZE 512   // flood + walls
-extern byte flood[16][16];
-extern byte walls[16][16];  
+extern byte flood[N][N];
+extern byte walls[N][N];  
 /////////////////////////////
 // put function declarations here:
 
@@ -25,7 +26,7 @@ void loadfloodFromEEPROM();
 ///////////////////////////////////////////////////////////////
 extern int curr_x;
 extern int curr_y;
-
+//extern DFRobot_BMI160 imu; 
 void setup() {
   pinMode(SENSOR_FRONT, INPUT);
   pinMode(SENSOR_LEFT, INPUT);
@@ -35,6 +36,26 @@ void setup() {
   //////////////////////////////////
   EEPROM.begin(EEPROM_SIZE);
   //////////////////////////////////
+  ledcSetup(PWM_CHANNEL_LEFT, PWM_FREQ, PWM_RESOLUTION);
+  ledcSetup(PWM_CHANNEL_RIGHT, PWM_FREQ, PWM_RESOLUTION);
+
+  ledcAttachPin(MOTOR_LEFT_PWM, PWM_CHANNEL_LEFT);
+  ledcAttachPin(MOTOR_RIGHT_PWM, PWM_CHANNEL_RIGHT);
+
+  // Encoders
+  pinMode(ENCODER_LEFT_A, INPUT_PULLUP);
+  pinMode(ENCODER_RIGHT_A, INPUT_PULLUP);
+
+  pinMode(MOTOR_LEFT_LOW, OUTPUT);
+pinMode(MOTOR_RIGHT_LOW, OUTPUT);
+
+  attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT_A), encoderLeftISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT_A), encoderRightISR, RISING);
+  /////////////////////////////////
+  
+  
+
+  ////////////////////////////////
   initWalls();
   floodFill();
 }
@@ -86,8 +107,9 @@ void loop() {
     floodFill();
     stepToLowestNeighborStatic();
 
-    if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
-        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {
+    /*if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
+        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/
+        if(curr_x==(N/2)&&curr_y==(N/2)){
       stopMotors();
       savefloodToEEPROM();
     
@@ -115,7 +137,7 @@ void loop() {
 int addr = 0;
 
 void savefloodToEEPROM() {
-  
+  addr=256;
 
   // save flood
   for (int i = 0; i < 16; i++) {
@@ -125,8 +147,10 @@ void savefloodToEEPROM() {
       addr += sizeof(byte);
     }
   }
+  EEPROM.commit();
 }
 void savewallsToEEPROM() {
+  addr=0;
   // save walls
   for (int i = 0; i < 16; i++) {
     for (int j = 0; j < 16; j++) {
@@ -156,7 +180,7 @@ void loadwallsFromEEPROM() {
   // get flood
   for (int i = 0; i < 16; i++) {
     for (int j = 0; j < 16; j++) {
-      int value;
+      byte value;
       EEPROM.get(addr, value);
       flood[i][j] = value;
       addr += sizeof(byte);

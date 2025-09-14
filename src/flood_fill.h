@@ -1,7 +1,7 @@
 #ifndef FLOODFILL_H
 #define FLOODFILL_H
 
-#define N 16
+#define N 5
 #ifdef __cplusplus
 extern "C" {
 #endif

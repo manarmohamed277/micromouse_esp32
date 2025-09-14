@@ -19,8 +19,8 @@ byte visited[N][N] = {0};
 byte walls[N][N] = {0};
 int bestDir;
 
-byte flood[N][N] =
-        {
+byte flood[N][N] ={0};
+       /* {
                 {14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14},
                 {13, 12, 11, 10, 9, 8, 7, 6, 6, 7, 8, 9, 10, 11, 12, 13},
                 {12, 11, 10, 9, 8, 7, 6, 5, 5, 6, 7, 8, 9, 10, 11, 12},
@@ -37,7 +37,7 @@ byte flood[N][N] =
                 {12, 11, 10, 9, 8, 7, 6, 5, 5, 6, 7, 8, 9, 10, 11, 12},
                 {13, 12, 11, 10, 9, 8, 7, 6, 6, 7, 8, 9, 10, 11, 12, 13},
                 {14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14}
-        };
+        };*/
 /************************see if there is a wall***********************/
 int hasWall(int x, int y, int dir) {
     return walls[x][y] & (1 << dir);
@@ -204,7 +204,7 @@ int hasWall(int x, int y, int dir) {
                   turnRight();
 
             ////////////////////////////////////////////////
-            moveForward();
+            moveForward(.14);
           }
           //////////////////////////////////////////////////////////////
            void exploreMaze() {
@@ -251,7 +251,7 @@ int hasWall(int x, int y, int dir) {
 
                           Direction = d;
 
-                          moveForward();
+                          moveForward(.14);
                           curr_x = nx; curr_y = ny;
 
                           senseWalls(); // مهم جداً: أول ما أوصل لخلية أسجل الحيطان
@@ -328,7 +328,7 @@ int hasWall(int x, int y, int dir) {
                       }
 
                       ////////////////////////////////////////////////
-                      moveForward();
+                      moveForward(.14);
                       visited[curr_x][curr_y]++;
                       // مفيش جار جديد: ارجع لورا
                    /*   if(Direction==0){ turnLeft(); turnLeft(); Direction=2; }
@@ -479,14 +479,14 @@ int hasWall(int x, int y, int dir) {
                   }
 
                   ////////////////////////////////////////////////
-                  moveForward();
+                  moveForward(.14);
                   visited[curr_x][curr_y]++;
 
                   return;
               }
 
             ////////////////////////////////////////////////
-            moveForward();
+            moveForward(.14);
               visited[curr_x][curr_y]=1;
 
           }
@@ -572,7 +572,7 @@ void stepToLowestNeighborStatic() {
         else if (Direction == 2 && bestDir == 3)
             turnRight();
 
-        moveForward();
+        moveForward(.14);
     }
 
 
@@ -632,7 +632,7 @@ void stepToLowestNeighborStatic() {
               else if (Direction == 2 && bestDir == 3) turnRight();
 
 
-              moveForward();
+              moveForward(.14);
           }
           /*********************************************************************************/
           /*********************************************************************************/
