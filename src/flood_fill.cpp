@@ -3,6 +3,7 @@
 #include"sensor.h"
 #include"queue.h"
 #include"move.h"
+#include "BluetoothSerial.h"
 
 
 //////////////////////////////flood fill/////////////////////////////////
@@ -18,6 +19,7 @@ int Direction = 0;
 byte visited[N][N] = {0};
 byte walls[N][N] = {0};
 int bestDir;
+ BluetoothSerial SerialBT;
 
 byte flood[N][N] ={0};
        /* {
@@ -60,8 +62,8 @@ int hasWall(int x, int y, int dir) {
           /***********************************************************************/
           /*********************see & add walls***********************************/
           void senseWalls() {
-
-              if (readFrontSensor()) {
+int f=!readFrontSensor();
+             /* if (f==1) {
                   int nx = curr_x + dx[Direction];
                   int ny = curr_y + dy[Direction];
                   walls[curr_x][curr_y] |= (1 << Direction);
@@ -71,10 +73,11 @@ int hasWall(int x, int y, int dir) {
                       int opp = (Direction + 2) % 4;
                       walls[nx][ny] |= (1 << opp);
                   }
-              }
-
-
-              if (readLeftSensor()) {
+              }*/
+             SerialBT.print("FRONT SENSOR=");
+             SerialBT.println(f);
+int l=!readLeftSensor();
+              /*if (l==1) {
                   int dir = (Direction+3)%4;
                   int nx = curr_x + dx[dir];
                   int ny = curr_y + dy[dir];
@@ -84,10 +87,12 @@ int hasWall(int x, int y, int dir) {
                       int opp = (dir + 2) % 4;
                       walls[nx][ny] |= (1 << opp);
                   }
-              }
+              }*/
+              SerialBT.print("Left SENSOR=");
+             SerialBT.println(l);
 
-
-              if (readRightSensor()) {
+int r=!readRightSensor();
+              /*if (r==1) {
                   int dir = (Direction+1)%4;
                   int nx = curr_x + dx[dir];
                   int ny = curr_y + dy[dir];
@@ -98,7 +103,10 @@ int hasWall(int x, int y, int dir) {
                       walls[nx][ny] |= (1 << opp);
 
                   }
-              }
+              }*/
+              SerialBT.print("right SENSOR=");
+             SerialBT.println(r);
+
           }
 
 /***********************************************************************/
@@ -115,10 +123,14 @@ int hasWall(int x, int y, int dir) {
               // mark goal (center 4 cells)
               visited[7][7]=1; visited[7][8]=1; visited[8][7]=1; visited[8][8]=1;
 
-              queueEntry e1={7,7}; append(e1,&q);
+             /* queueEntry e1={7,7}; append(e1,&q);
               queueEntry e2={7,8}; append(e2,&q);
               queueEntry e3={8,7}; append(e3,&q);
-              queueEntry e4={8,8}; append(e4,&q);
+              queueEntry e4={8,8}; append(e4,&q);*/
+               queueEntry e1={3,3}; append(e1,&q);
+              queueEntry e2={3,4}; append(e2,&q);
+              queueEntry e3={4,3}; append(e3,&q);
+              queueEntry e4={4,4}; append(e4,&q);
 
               while (!queueEmpty(&q)) {
                   queueEntry curr; serve(&curr,&q);
@@ -204,7 +216,7 @@ int hasWall(int x, int y, int dir) {
                   turnRight();
 
             ////////////////////////////////////////////////
-            moveForward(.14);
+            moveForward();
           }
           //////////////////////////////////////////////////////////////
            void exploreMaze() {
@@ -251,7 +263,7 @@ int hasWall(int x, int y, int dir) {
 
                           Direction = d;
 
-                          moveForward(.14);
+                          moveForward();
                           curr_x = nx; curr_y = ny;
 
                           senseWalls(); // مهم جداً: أول ما أوصل لخلية أسجل الحيطان
@@ -328,7 +340,7 @@ int hasWall(int x, int y, int dir) {
                       }
 
                       ////////////////////////////////////////////////
-                      moveForward(.14);
+                      moveForward();
                       visited[curr_x][curr_y]++;
                       // مفيش جار جديد: ارجع لورا
                    /*   if(Direction==0){ turnLeft(); turnLeft(); Direction=2; }
@@ -479,14 +491,14 @@ int hasWall(int x, int y, int dir) {
                   }
 
                   ////////////////////////////////////////////////
-                  moveForward(.14);
+                  moveForward();
                   visited[curr_x][curr_y]++;
 
                   return;
               }
 
             ////////////////////////////////////////////////
-            moveForward(.14);
+            moveForward();
               visited[curr_x][curr_y]=1;
 
           }
@@ -572,7 +584,7 @@ void stepToLowestNeighborStatic() {
         else if (Direction == 2 && bestDir == 3)
             turnRight();
 
-        moveForward(.14);
+        moveForward();
     }
 
 
@@ -632,7 +644,7 @@ void stepToLowestNeighborStatic() {
               else if (Direction == 2 && bestDir == 3) turnRight();
 
 
-              moveForward(.14);
+              moveForward();
           }
           /*********************************************************************************/
           /*********************************************************************************/

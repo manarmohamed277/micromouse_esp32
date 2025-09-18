@@ -4,11 +4,14 @@
 #include "sensor.h"
 #include "flood_fill.h"
 #include <EEPROM.h>
-#include <DFRobot_BMI160.h>
+#include "ESP32Encoder.h"
+#include <Wire.h>
+#include "DFRobot_BMI160.h"
+#include "BluetoothSerial.h"
 
 //switch
-#define switch_pin 20
-#define switch_pin_go 19
+#define switch_pin 35
+#define switch_pin_go 34
 //////////////////////////
 #define EEPROM_SIZE 512   // flood + walls
 extern byte flood[N][N];
@@ -26,7 +29,15 @@ void loadfloodFromEEPROM();
 ///////////////////////////////////////////////////////////////
 extern int curr_x;
 extern int curr_y;
-//extern DFRobot_BMI160 imu; 
+extern int freq ;       // 1 kHz
+extern int resolution ;    // 
+extern float angleZ ;
+extern ESP32Encoder rightEncoder;
+extern ESP32Encoder leftEncoder;
+extern BluetoothSerial SerialBT;   // بلوتوث
+
+extern DFRobot_BMI160 bmi160;
+extern  int8_t i2c_addr ;
 void setup() {
   pinMode(SENSOR_FRONT, INPUT);
   pinMode(SENSOR_LEFT, INPUT);
@@ -34,61 +45,88 @@ void setup() {
   ///////////////////////////////////
   pinMode(switch_pin, INPUT);
   //////////////////////////////////
-  EEPROM.begin(EEPROM_SIZE);
+  //EEPROM.begin(EEPROM_SIZE);
   //////////////////////////////////
-  ledcSetup(PWM_CHANNEL_LEFT, PWM_FREQ, PWM_RESOLUTION);
-  ledcSetup(PWM_CHANNEL_RIGHT, PWM_FREQ, PWM_RESOLUTION);
+   pinMode(14,OUTPUT);
+  digitalWrite(14,LOW);
 
-  ledcAttachPin(MOTOR_LEFT_PWM, PWM_CHANNEL_LEFT);
-  ledcAttachPin(MOTOR_RIGHT_PWM, PWM_CHANNEL_RIGHT);
+  pinMode(27,OUTPUT);
+  digitalWrite(27,LOW);
 
-  // Encoders
-  pinMode(ENCODER_LEFT_A, INPUT_PULLUP);
-  pinMode(ENCODER_RIGHT_A, INPUT_PULLUP);
+  Wire.begin(21, 22); 
+  Serial.begin(115200);
+  SerialBT.begin("ESP32_BMI160"); 
+  ledcSetup(0, freq, resolution);
+  ledcSetup(1, freq, resolution);
+  ledcSetup(2, freq, resolution);
+  ledcSetup(3, freq, resolution);
 
-  pinMode(MOTOR_LEFT_LOW, OUTPUT);
-pinMode(MOTOR_RIGHT_LOW, OUTPUT);
+  ledcAttachPin(IN1, 0);
+  ledcAttachPin(IN2, 1);
+  ledcAttachPin(IN3, 2);
+  ledcAttachPin(IN4, 3);
 
-  attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT_A), encoderLeftISR, RISING);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT_A), encoderRightISR, RISING);
+  rightEncoder.attachFullQuad(32, 33);
+  leftEncoder.attachFullQuad(18, 19);
+  rightEncoder.clearCount();
+  leftEncoder.clearCount();
+
   /////////////////////////////////
-  
-  
+  if (bmi160.softReset() != BMI160_OK) {
+   // Serial.println("BMI160 reset no");
+    SerialBT.println("BMI160 reset no");
+    while (1);
+  }
+
+  if (bmi160.I2cInit(i2c_addr) != BMI160_OK) {
+    //Serial.println("BMI160 init no");
+    SerialBT.println("BMI160 init no");
+    while (1);
+  }
+
+  delay(6000);
 
   ////////////////////////////////
-  initWalls();
-  floodFill();
+//digitalWrite(switch_pin,LOW);
+  ////////////////////////////////
+//  initWalls();
+ // floodFill();
 }
 
 void loop() {
-/*  int switchState = digitalRead(switch_pin);
 
-  if (switchState == LOW) {
+  //int switchState = digitalRead(switch_pin);
+
+  //if (switchState == LOW) {
     senseWalls();
-    floodFill();
-    stepToLowestNeighbor();
+    delay(4000);
+   // floodFill();
+   // stepToLowestNeighbor_old();
 
-    if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
-        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {
+    /*if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
+        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/
+      /*  if(curr_x==(N/2)&&curr_y==(N/2)){
       stopMotors();
-      saveDataToEEPROM();
-    }
-    while (digitalRead(switch_pin) == LOW);  // stop here
+      while(1);
+      //saveDataToEEPROM();
+    }*/
+   /* while (digitalRead(switch_pin) == LOW);  // stop here
   } 
   else if (switchState == HIGH) {
     loadDataFromEEPROM();
-    stepToLowestNeighbor();
+    stepToLowestNeighbor();*/
 
-    if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
-        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {
+   /* if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
+        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/
+      /*  if(curr_x==(N/2)&&curr_y==(N/2)){
       stopMotors();
-    }
-    while (digitalRead(switch_pin) == HIGH);
-  }*/
+    }*/
+   // while (digitalRead(switch_pin) == HIGH);
+  //}
 
   //////////////////////////////////////////////////////////////////////
 
-  int switchState = digitalRead(switch_pin);
+  /*int switchState = digitalRead(switch_pin);
   int switchState_go = digitalRead(switch_pin_go);
 
   if (switchState == HIGH) {
@@ -108,7 +146,7 @@ void loop() {
     stepToLowestNeighborStatic();
 
     /*if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
-        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/
+        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {
         if(curr_x==(N/2)&&curr_y==(N/2)){
       stopMotors();
       savefloodToEEPROM();
@@ -131,10 +169,10 @@ void loop() {
   }
 
 }
-}
+}*/
 
 // put function definitions here:
-int addr = 0;
+/*int addr = 0;
 
 void savefloodToEEPROM() {
   addr=256;
@@ -185,5 +223,5 @@ void loadwallsFromEEPROM() {
       flood[i][j] = value;
       addr += sizeof(byte);
     }
-  }
+  }*/
 }
