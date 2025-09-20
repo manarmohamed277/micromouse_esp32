@@ -53,7 +53,9 @@ void setup() {
   pinMode(27,OUTPUT);
   digitalWrite(27,LOW);
 
-  Wire.begin(21, 22); 
+//I2C begin
+  Wire.begin(S_DA, S_CLK); 
+
   Serial.begin(115200);
   SerialBT.begin("ESP32_BMI160"); 
   ledcSetup(0, freq, resolution);
@@ -68,6 +70,7 @@ void setup() {
 
   rightEncoder.attachFullQuad(32, 33);
   leftEncoder.attachFullQuad(18, 19);
+  
   rightEncoder.clearCount();
   leftEncoder.clearCount();
 
@@ -85,12 +88,13 @@ void setup() {
   }
 
   delay(6000);
+  SerialBT.begin("ESP32_BMI160");
 
   ////////////////////////////////
 //digitalWrite(switch_pin,LOW);
   ////////////////////////////////
-//  initWalls();
- // floodFill();
+  initWalls();
+  floodFill();
 }
 
 void loop() {
@@ -99,9 +103,14 @@ void loop() {
 
   //if (switchState == LOW) {
     senseWalls();
-    delay(4000);
-   // floodFill();
-   // stepToLowestNeighbor_old();
+    SerialBT.print("F raw="); SerialBT.println(!readFrontSensor());
+SerialBT.print("L raw="); SerialBT.println(!readLeftSensor());
+SerialBT.print("R raw="); SerialBT.println(!readRightSensor());
+
+delay(4000);
+   // delay(4000);
+    floodFill();
+    stepToLowestNeighbor_old();
 
     /*if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
         (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/

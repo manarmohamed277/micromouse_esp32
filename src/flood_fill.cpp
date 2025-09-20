@@ -62,8 +62,8 @@ int hasWall(int x, int y, int dir) {
           /***********************************************************************/
           /*********************see & add walls***********************************/
           void senseWalls() {
-int f=!readFrontSensor();
-             /* if (f==1) {
+
+              if (!readFrontSensor()) {
                   int nx = curr_x + dx[Direction];
                   int ny = curr_y + dy[Direction];
                   walls[curr_x][curr_y] |= (1 << Direction);
@@ -73,11 +73,11 @@ int f=!readFrontSensor();
                       int opp = (Direction + 2) % 4;
                       walls[nx][ny] |= (1 << opp);
                   }
-              }*/
-             SerialBT.print("FRONT SENSOR=");
-             SerialBT.println(f);
-int l=!readLeftSensor();
-              /*if (l==1) {
+              }
+           /*  SerialBT.print("FRONT SENSOR=");
+             SerialBT.println(f);*/
+
+              if (!readLeftSensor()) {
                   int dir = (Direction+3)%4;
                   int nx = curr_x + dx[dir];
                   int ny = curr_y + dy[dir];
@@ -87,12 +87,12 @@ int l=!readLeftSensor();
                       int opp = (dir + 2) % 4;
                       walls[nx][ny] |= (1 << opp);
                   }
-              }*/
-              SerialBT.print("Left SENSOR=");
-             SerialBT.println(l);
+              }
+            /*  SerialBT.print("Left SENSOR=");
+             SerialBT.println(l);*/
 
-int r=!readRightSensor();
-              /*if (r==1) {
+
+              if (!readRightSensor()) {
                   int dir = (Direction+1)%4;
                   int nx = curr_x + dx[dir];
                   int ny = curr_y + dy[dir];
@@ -103,9 +103,9 @@ int r=!readRightSensor();
                       walls[nx][ny] |= (1 << opp);
 
                   }
-              }*/
-              SerialBT.print("right SENSOR=");
-             SerialBT.println(r);
+              }
+             /* SerialBT.print("right SENSOR=");
+             SerialBT.println(r);*/
 
           }
 
@@ -119,14 +119,17 @@ int r=!readRightSensor();
                   for (int j=0;j<N;j++)
                       visited[i][j] = 0;
 
-            //API_setColor(curr_x,curr_y,'G');
-              // mark goal (center 4 cells)
-              visited[7][7]=1; visited[7][8]=1; visited[8][7]=1; visited[8][8]=1;
+              //mark the center cells 16*16
+              //visited[7][7]=1; visited[7][8]=1; visited[8][7]=1; visited[8][8]=1;
+              //8*8
+              visited[3][3]=1; visited[3][4]=1; visited[4][3]=1; visited[4][4]=1;
 
              /* queueEntry e1={7,7}; append(e1,&q);
               queueEntry e2={7,8}; append(e2,&q);
               queueEntry e3={8,7}; append(e3,&q);
               queueEntry e4={8,8}; append(e4,&q);*/
+
+              //8*8
                queueEntry e1={3,3}; append(e1,&q);
               queueEntry e2={3,4}; append(e2,&q);
               queueEntry e3={4,3}; append(e3,&q);
@@ -365,143 +368,7 @@ int r=!readRightSensor();
              
           }
 
-/*********************less turns more distans*****************************/
-        void stepToLowestNeighbor() {
 
-
-
-               bestDir=-1; int bestVal=999;
-              int found = 0;
-              for (int d=0; d<4; d++) {
-                  int nx=curr_x+dx[d], ny=curr_y+dy[d];
-                  if (nx>=0 && ny>=0 && nx<N && ny<N) {
-                     if ((!hasWall(curr_x,curr_y,d))&&(!visited[nx][ny])) {
-                         found=1;
-                          if (flood[nx][ny] < bestVal) {
-                              bestVal=flood[nx][ny];
-                              bestDir=d;
-                             //
-                             // printf("best direction %d",d);
-                          }
-                      }
-                  }
-              }
-             
-
-              // directions: 0=N, 1=E, 2=S, 3=W
-              if((Direction==0)&&(bestDir==1))
-                  turnRight();
-              else if(Direction==0&&bestDir==3)
-                  turnLeft();
-
-              else if(Direction==0&&bestDir==2)
-              {
-                  turnLeft();
-                  turnLeft();
-              }
-
-              //////////////////////////////////////////////
-              else if(Direction==1&&bestDir==0)
-                  turnLeft();
-
-              else if(Direction==1&&bestDir==3) {
-                  turnLeft();
-                  turnLeft();
-              }
-              else if(Direction==1&&bestDir==2)
-                  turnRight();
-              //////////////////////////////////////////////
-              else if(Direction==3&&bestDir==0)
-                  turnRight();
-              else if(Direction==3&&bestDir==1){
-                  turnRight();
-                  turnRight();}
-              else if(Direction==3&&bestDir==2)
-                  turnLeft();
-
-              /////////////////////////////////////////////
-              else if(Direction==2&&bestDir==0){
-                  turnLeft();
-                  turnLeft();}
-              else if(Direction==2&&bestDir==1)
-                  turnLeft();
-              else if(Direction==2&&bestDir==3)
-                  turnRight();
-              else if (bestDir == -1) {
-                 // log("No move possible!");
-                  bestDir=-1; int bestVal=999;
-
-                  for (int d=0; d<4; d++) {
-                      int nx=curr_x+dx[d], ny=curr_y+dy[d];
-                      if (nx>=0 && ny>=0 && nx<N && ny<N) {
-                          if (!hasWall(curr_x,curr_y,d)) {
-                              if (visited[nx][ny] < bestVal) {
-                                  bestVal=visited[nx][ny];
-                                  bestDir=d;
-                                  //
-                                  // printf("best direction %d",d);
-                              }
-                          }
-                      }
-                  }
-                 
-
-                  // directions: 0=N, 1=E, 2=S, 3=W
-                  if((Direction==0)&&(bestDir==1))
-                      turnRight();
-                  else if(Direction==0&&bestDir==3)
-                      turnLeft();
-
-                  else if(Direction==0&&bestDir==2)
-                  {
-                      turnLeft();
-                      turnLeft();
-                  }
-
-                      //////////////////////////////////////////////
-                  else if(Direction==1&&bestDir==0)
-                      turnLeft();
-
-                  else if(Direction==1&&bestDir==3) {
-                      turnLeft();
-                      turnLeft();
-                  }
-                  else if(Direction==1&&bestDir==2)
-                      turnRight();
-                      //////////////////////////////////////////////
-                  else if(Direction==3&&bestDir==0)
-                      turnRight();
-                  else if(Direction==3&&bestDir==1){
-                      turnRight();
-                      turnRight();}
-                  else if(Direction==3&&bestDir==2)
-                      turnLeft();
-
-                      /////////////////////////////////////////////
-                  else if(Direction==2&&bestDir==0){
-                      turnLeft();
-                      turnLeft();}
-                  else if(Direction==2&&bestDir==1)
-                      turnLeft();
-                  else if(Direction==2&&bestDir==3)
-                      turnRight();
-                  else if (bestDir == -1) {
-                     
-                      return;
-                  }
-
-                  ////////////////////////////////////////////////
-                  moveForward();
-                  visited[curr_x][curr_y]++;
-
-                  return;
-              }
-
-            ////////////////////////////////////////////////
-            moveForward();
-              visited[curr_x][curr_y]=1;
-
-          }
 
 void stepToLowestNeighborStatic() {
 
@@ -521,22 +388,21 @@ void stepToLowestNeighborStatic() {
             }
         }
 
-        // لو لقى أكتر من جار بنفس القيمة (tie-breaking)
+       
         if (bestDir != -1) {
+            //give priority to the current direction
             for (int d = 0; d < 4; d++) {
                 int nx = curr_x + dx[d], ny = curr_y + dy[d];
                 if (nx >= 0 && ny >= 0 && nx < N && ny < N) {
                     if (!hasWall(curr_x, curr_y, d)) {
                         if (flood[nx][ny] == bestVal) {
-                            // الأولوية للاتجاه الحالي
+                           
                             if (d == Direction) {
                                 bestDir = d;
                                 break;
                             }
-                            // أولوية ثانوية: N=0, E=1, S=2, W=3
-                            if (bestDir != Direction && d < bestDir) {
-                                bestDir = d;
-                            }
+                            
+                            
                         }
                     }
                 }
@@ -550,7 +416,7 @@ void stepToLowestNeighborStatic() {
             return;
         }
 
-        // نفس كود الدوران بتاعك بالظبط
+        //turn to the best direction
         if ((Direction == 0) && (bestDir == 1))
             turnRight();
         else if (Direction == 0 && bestDir == 3)
@@ -590,62 +456,7 @@ void stepToLowestNeighborStatic() {
 
 
 
-/*********************less turns more distans*****************************/
-          void stepToLowestNeighbor_fewer_turns() {
-              bestDir = -1;
-              int bestVal = 999;
 
-              for (int d = 0; d < 4; d++) {
-                  int nx = curr_x + dx[d];
-                  int ny = curr_y + dy[d];
-                  if (nx >= 0 && ny >= 0 && nx < N && ny < N) {
-                      if (!hasWall(curr_x, curr_y, d)) {
-                          int cost = flood[nx][ny];
-
-
-                          if (d != Direction) {
-                              cost += 1;
-                          }
-
-
-                          if (d == Direction && cost <= bestVal) {
-                              bestVal = cost;
-                              bestDir = d;
-                          }
-                          else if (cost < bestVal) {
-                              bestVal = cost;
-                              bestDir = d;
-                          }
-                      }
-                  }
-              }
-
-
-              if (bestDir == -1) {
-                  
-                  return;
-              }
-
-
-              if (Direction == 0 && bestDir == 1) turnRight();
-              else if (Direction == 0 && bestDir == 3) turnLeft();
-              else if (Direction == 0 && bestDir == 2) { turnLeft(); turnLeft(); }
-
-              else if (Direction == 1 && bestDir == 0) turnLeft();
-              else if (Direction == 1 && bestDir == 3) { turnLeft(); turnLeft(); }
-              else if (Direction == 1 && bestDir == 2) turnRight();
-
-              else if (Direction == 3 && bestDir == 0) turnRight();
-              else if (Direction == 3 && bestDir == 1) { turnRight(); turnRight(); }
-              else if (Direction == 3 && bestDir == 2) turnLeft();
-
-              else if (Direction == 2 && bestDir == 0) { turnLeft(); turnLeft(); }
-              else if (Direction == 2 && bestDir == 1) turnLeft();
-              else if (Direction == 2 && bestDir == 3) turnRight();
-
-
-              moveForward();
-          }
           /*********************************************************************************/
           /*********************************************************************************/
 

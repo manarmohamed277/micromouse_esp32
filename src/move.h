@@ -9,6 +9,10 @@ extern "C" {
 #define IN3  27  // Left Motor +
 #define IN4  14  // Left Motor -
 
+//ENCODER
+#define S_DA 21
+#define S_CLK 22
+
 void moveForward( );
 void turnLeft();
 void turnRight();
