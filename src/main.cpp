@@ -114,11 +114,11 @@ delay(4000);
 
     /*if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
         (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/
-      /*  if(curr_x==(N/2)&&curr_y==(N/2)){
+       if(curr_x==(N/2)&&curr_y==(N/2)){
       stopMotors();
       while(1);
       //saveDataToEEPROM();
-    }*/
+    }
    /* while (digitalRead(switch_pin) == LOW);  // stop here
   } 
   else if (switchState == HIGH) {
