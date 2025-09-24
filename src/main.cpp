@@ -7,7 +7,6 @@
 #include "ESP32Encoder.h"
 #include <Wire.h>
 #include "DFRobot_BMI160.h"
-#include "BluetoothSerial.h"
 
 //switch
 #define switch_pin 35
@@ -34,7 +33,6 @@ extern int resolution ;    //
 extern float angleZ ;
 extern ESP32Encoder rightEncoder;
 extern ESP32Encoder leftEncoder;
-extern BluetoothSerial SerialBT;   // بلوتوث
 
 extern DFRobot_BMI160 bmi160;
 extern  int8_t i2c_addr ;
@@ -57,7 +55,7 @@ void setup() {
   Wire.begin(S_DA, S_CLK); 
 
   Serial.begin(115200);
-  SerialBT.begin("ESP32_BMI160"); 
+ 
   ledcSetup(0, freq, resolution);
   ledcSetup(1, freq, resolution);
   ledcSetup(2, freq, resolution);
@@ -77,18 +75,17 @@ void setup() {
   /////////////////////////////////
   if (bmi160.softReset() != BMI160_OK) {
    // Serial.println("BMI160 reset no");
-    SerialBT.println("BMI160 reset no");
+   
     while (1);
   }
 
   if (bmi160.I2cInit(i2c_addr) != BMI160_OK) {
-    //Serial.println("BMI160 init no");
-    SerialBT.println("BMI160 init no");
+    
     while (1);
   }
 
-  delay(6000);
-  SerialBT.begin("ESP32_BMI160");
+  delay(5000);
+  
 
   ////////////////////////////////
 //digitalWrite(switch_pin,LOW);
@@ -103,33 +100,32 @@ void loop() {
 
   //if (switchState == LOW) {
     senseWalls();
-    SerialBT.print("F raw="); SerialBT.println(!readFrontSensor());
-SerialBT.print("L raw="); SerialBT.println(!readLeftSensor());
-SerialBT.print("R raw="); SerialBT.println(!readRightSensor());
-
-delay(4000);
-   // delay(4000);
+//delay(4000);
+    delay(200);
     floodFill();
     stepToLowestNeighbor_old();
 
-    /*if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
-        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/
-       if(curr_x==(N/2)&&curr_y==(N/2)){
+    if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
+        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {
+     
       stopMotors();
-      while(1);
-      //saveDataToEEPROM();
+      while (1);
+
+      
     }
+  }
+  /*if ((curr_x == 1 && curr_y == 1) || (curr_x == 1 && curr_y == 2) || 
+        (curr_x == 2 && curr_y == 1) || (curr_x == 2 && curr_y == 2)) {*/
+      // if(curr_x==2&&curr_y==2){
+     // stopMotors();
+      //while(1);
+      //saveDataToEEPROM();
+    
    /* while (digitalRead(switch_pin) == LOW);  // stop here
   } 
   else if (switchState == HIGH) {
     loadDataFromEEPROM();
     stepToLowestNeighbor();*/
-
-   /* if ((curr_x == 7 && curr_y == 7) || (curr_x == 7 && curr_y == 8) || 
-        (curr_x == 8 && curr_y == 7) || (curr_x == 8 && curr_y == 8)) {*/
-      /*  if(curr_x==(N/2)&&curr_y==(N/2)){
-      stopMotors();
-    }*/
    // while (digitalRead(switch_pin) == HIGH);
   //}
 
@@ -233,4 +229,4 @@ void loadwallsFromEEPROM() {
       addr += sizeof(byte);
     }
   }*/
-}
+

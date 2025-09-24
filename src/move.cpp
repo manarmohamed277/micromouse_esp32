@@ -1,11 +1,10 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "DFRobot_BMI160.h"
-//#include "BluetoothSerial.h"
 #include "ESP32Encoder.h"
 #include "sensor.h"
 #include "move.h"
-  // بلوتوث
+  
 
 DFRobot_BMI160 bmi160;
  int8_t i2c_addr = 0x68;   
@@ -20,7 +19,11 @@ unsigned long prevTime = 0;
 ///////////////encoder//////////
 ESP32Encoder rightEncoder;
 ESP32Encoder leftEncoder;
+/////////////////////////////////
 
+extern int Direction;
+
+//////////////////////////////////
 void rightMotorForward(int speed) {
   ledcWrite(0, speed);
   ledcWrite(1, 0);
@@ -52,7 +55,7 @@ void rotate90Right(int speed) {
   angleZ = 0;
   prevTime = millis();
 
-  // لف مكانك: يمين قدام + شمال ورا
+  
   rightMotorForward(speed);
   leftMotorBackward(speed);
 
@@ -64,8 +67,8 @@ void rotate90Right(int speed) {
     int16_t accelGyro[6] = {0};
     if (bmi160.getAccelGyroData(accelGyro) == 0) {
       float gz = accelGyro[2] / 16.4;  // rad/s
-     // gz = gz - gyroZ_offset;                  // اطرح الـ offset
-      angleZ += gz  * dt;      // اجمع بالدرجات
+     
+      angleZ += gz  * dt;     
     }
     if (angleZ >= 90.0 || angleZ <= -90.0) {
     stopMotors();
@@ -74,26 +77,26 @@ void rotate90Right(int speed) {
   }
 
   stopMotors();
-// SerialBT.println("Rotation 90 done!");
+
 }
 ///////////////////////////////////////PID///////////////////////////////////
- float Kp = 2.0;    // proportional
- float Ki = 0.6;    // integral
- float Kd = 0.04;   // derivative
+ float Kp = 4.0;    // proportional
+ float Ki = 0.7;    // integral
+ float Kd = 0.03;   // derivative
 
 bool rotateByAnglePID(float targetDeg, int maxPWM = 255, unsigned long timeoutMs = 6000) {
   
 
-  // anti-windup limits للـ integral term
+
   const float integratorMax = 100.0;
   const float integratorMin = -100.0;
 
-  // conversion factor: RAW -> deg/s (لـ BMI160 ±2000dps)
+  
   const float RAW_TO_DPS = 1.0f / 16.4f; // accelGyro raw /16.4 = deg/s
 
   float integrator = 0.0;
   float prevError = 0.0;
-  float currentAngle = 0.0;    // درجة، ممكن تكون موجبة أو سالبة
+  float currentAngle = 0.0;   
   unsigned long prevMicros = micros();
   unsigned long startMs = millis();
 
@@ -168,15 +171,12 @@ bool rotateByAnglePID(float targetDeg, int maxPWM = 255, unsigned long timeoutMs
     }
 
     
-   /* SerialBT.print("err="); SerialBT.print(error, 2);
-    SerialBT.print(" angle="); SerialBT.print(currentAngle, 2);
-    SerialBT.print(" gz="); SerialBT.print(gz_dps, 2);
-    SerialBT.print(" out="); SerialBT.println(output, 2);*/
+   
 
    
     if (fabs(error) < 2.09) { 
       stopMotors();
-     // SerialBT.println("PID rotate DONE");
+     
        return true; 
     }
     delay(5);
@@ -192,10 +192,12 @@ return false;
 
 void turnLeft(){
   rotateByAnglePID(90,255,7000);
+  Direction = (Direction + 3) % 4;
 }
 
 void turnRight(){
   rotateByAnglePID(-90,255,7000);
+  Direction = (Direction + 1) % 4;
 }
 
 //////////////////////////PID///////////////////////////////////////
@@ -205,7 +207,7 @@ void turnRight(){
 ///////////////////////////////////////////////////////////////////
 
 void moveForward(  ) {
-  float wheelCircumference = 12.566; 
+  /*float wheelCircumference = 12.566; 
   float revs = 18.0 / wheelCircumference;
 
  
@@ -228,7 +230,80 @@ void moveForward(  ) {
     delay(1);
   }
 
-  stopMotors();
+  stopMotors();*/
+  ///////////////////////////
+   
+
+    
+
+    float distance_cm =18.0;
+    int targetPWM     = 220;
+    float Kp          = .5;
+    float Ki          =0.6;
+    float Kd          = 0;
+
+    float wheelCircumference = 12.566; 
+    float revs = distance_cm / wheelCircumference;
+    long targetCounts = (long)(revs * 8400);
+
+    int16_t accelGyro[6] = {0};
+    float initialAngleZ = 0;
+    float currentAngleZ = 0;
+
+    rightEncoder.clearCount();
+    leftEncoder.clearCount();
+
+    if (bmi160.getAccelGyroData(accelGyro) == 0) {
+        initialAngleZ = 0;
+    }
+
+    unsigned long prevTime = millis();
+    float integral = 0;
+    float lastError = 0;
+
+    while (true) {
+        long rightCount = rightEncoder.getCount();
+        long leftCount  = -leftEncoder.getCount();
+        long avgCount   = (rightCount + leftCount) / 2;
+
+        if (avgCount >= targetCounts) break;
+
+        unsigned long currTime = millis();
+        float dt = (currTime - prevTime) / 1000.0;
+        prevTime = currTime;
+
+        if (bmi160.getAccelGyroData(accelGyro) == 0) {
+            float gz = ((float)accelGyro[2]) / 16.4; 
+            currentAngleZ += gz * dt;
+        }
+
+        float error = currentAngleZ - initialAngleZ;
+
+        // PID 
+        integral += error * dt;
+        float derivative = (error - lastError) / dt;
+        lastError = error;
+
+        float correction = Kp * error + Ki * integral + Kd * derivative;
+
+        int rightPWM, leftPWM;
+
+        if (error > 0) {
+            rightPWM = constrain(targetPWM - correction, 0, 255);
+            leftPWM  = constrain(targetPWM + correction, 0, 255);
+        } else {
+            rightPWM = constrain(targetPWM + correction, 0, 255);
+            leftPWM  = constrain(targetPWM - correction, 0, 255);
+        }
+
+        rightMotorForward(rightPWM);
+        leftMotorForward(leftPWM);
+
+        delay(5);
+    }
+
+    stopMotors();
+    
 }
 
 
@@ -249,7 +324,7 @@ void moveForward(  ) {
 
 ///////////////////////////motion_correct///////////////////////////
 /*void moveStraightPIDBT() {
-    // استقبل الأمر من البلوتوث: "distance,pwm,Kp"
+    //  "distance,pwm,Kp"
     if (SerialBT.available()) {
         String data = SerialBT.readStringUntil('\n');
         data.trim();
