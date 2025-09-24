@@ -84,7 +84,7 @@ void rotate90Right(int speed) {
  float Ki = 0.7;    // integral
  float Kd = 0.03;   // derivative
 
-bool rotateByAnglePID(float targetDeg, int maxPWM = 255, unsigned long timeoutMs = 6000) {
+bool rotateByAnglePID(float targetDeg, int maxPWM = 255, unsigned long timeoutMs = 4000) {
   
 
 
@@ -238,7 +238,7 @@ void moveForward(  ) {
 
     float distance_cm =18.0;
     int targetPWM     = 220;
-    float Kp          = .5;
+    float Kp          = .7;
     float Ki          =0.6;
     float Kd          = 0;
 
