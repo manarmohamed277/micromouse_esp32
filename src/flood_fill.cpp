@@ -3,7 +3,6 @@
 #include"sensor.h"
 #include"queue.h"
 #include"move.h"
-#include "BluetoothSerial.h"
 
 
 //////////////////////////////flood fill/////////////////////////////////
@@ -19,7 +18,7 @@ int Direction = 0;
 byte visited[N][N] = {0};
 byte walls[N][N] = {0};
 int bestDir;
- BluetoothSerial SerialBT;
+ 
 
 byte flood[N][N] ={0};
        /* {
